@@ -291,6 +291,25 @@ async def startup_event():
     """Start Binance WebSocket service on app startup."""
     logger.info("🚀 Starting Fear & Greed Index 6900...")
 
+    # Check for required environment variables
+    cmc_api_key = os.getenv("CMC_API_KEY")
+    cron_secret = os.getenv("CRON_SECRET")
+
+    if not cmc_api_key:
+        logger.error("❌ CRITICAL: CMC_API_KEY environment variable is not set!")
+        logger.error("The application will not be able to fetch market data from CoinMarketCap.")
+        logger.error("Please configure CMC_API_KEY in your Vercel environment variables.")
+
+    if not cron_secret:
+        logger.warning("⚠️  WARNING: CRON_SECRET environment variable is not set!")
+        logger.warning("The cron endpoint will not function properly without this secret.")
+        logger.warning("Please configure CRON_SECRET in your Vercel environment variables.")
+
+    if not cmc_api_key or not cron_secret:
+        logger.info("💡 Configuration missing. Application started in limited mode.")
+    else:
+        logger.info("✅ Environment variables configured correctly")
+
     # Subscribe to Binance events
     binance_service.subscribe_price(on_price_update)
     binance_service.subscribe_volatility(on_volatility_spike)

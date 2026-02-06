@@ -5,13 +5,23 @@
       "schedule": "*/5 * * * *"
     }
   ],
-  "buildCommand": "pip install uv && uv pip install -r requirements.txt",
+  "buildCommand": "pip install -r requirements.txt",
   "devCommand": "uvicorn src.api.main:app --host 0.0.0.0 --port 8000",
-  "installCommand": "pip install uv",
+  "installCommand": "pip install -r requirements.txt",
   "outputDirectory": ".",
   "functions": {
-    "api/**/*.py": {
-      "runtime": "python3.11"
+    "src/api/**/*.py": {
+      "runtime": "python@3.11"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/v1/(.*)",
+      "destination": "/src/api/main.py"
+    },
+    {
+      "source": "/",
+      "destination": "/src/api/main.py"
+    }
+  ]
 }
