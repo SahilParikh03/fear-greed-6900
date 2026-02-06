@@ -426,7 +426,7 @@ export function LandingPage() {
             transition={{ duration: 0.8, ease: "easeInOut" }}
           >
             {/* Terminal Header with Tab Switcher */}
-            <div className="relative bg-crypto-darker/80 px-6 py-3 border-b border-green-500/30">
+            <div className="relative bg-crypto-darker/80 px-6 py-3 border-b border-green-500/30 z-0">
               <div className="flex items-center gap-4 mb-3">
                 <div className="flex gap-2">
                   <div className="w-3 h-3 rounded-full bg-red-500" />
@@ -438,10 +438,11 @@ export function LandingPage() {
               </div>
 
               {/* Tab Switcher */}
-              <div className="relative flex gap-1 p-1 bg-crypto-darker/60 rounded-lg">
+              <div className="relative flex gap-1 p-1 bg-crypto-darker/60 rounded-lg isolate">
                 {/* Animated pill background */}
                 <motion.div
-                  className="absolute h-[calc(100%-8px)] bg-green-500/20 rounded-md border border-green-500/40 z-10"
+                  className="absolute h-[calc(100%-8px)] bg-green-500/20 rounded-md border border-green-500/40"
+                  style={{ zIndex: 10 }}
                   layoutId="activeTabPill"
                   initial={false}
                   animate={{
@@ -476,7 +477,7 @@ export function LandingPage() {
             </div>
 
             {/* Tab Content - Fixed Height Container */}
-            <motion.div className="relative min-h-[400px] overflow-hidden">
+            <motion.div className="relative h-[400px] overflow-hidden">
               <AnimatePresence mode="wait" initial={false}>
                 {activeTab === "signal" ? (
                   /* JSON Code Block */

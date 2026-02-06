@@ -1,27 +1,21 @@
 {
+  "version": 2,
   "crons": [
     {
       "path": "/api/v1/internal/cron-refresh",
       "schedule": "*/5 * * * *"
     }
   ],
-  "buildCommand": "pip install -r requirements.txt",
-  "devCommand": "uvicorn src.api.main:app --host 0.0.0.0 --port 8000",
-  "installCommand": "pip install -r requirements.txt",
-  "outputDirectory": ".",
-  "functions": {
-    "src/api/**/*.py": {
-      "runtime": "python@3.11"
+  "builds": [
+    {
+      "src": "vercel_app.py",
+      "use": "@vercel/python"
     }
-  },
-  "rewrites": [
+  ],
+  "routes": [
     {
-      "source": "/api/v1/(.*)",
-      "destination": "/src/api/main.py"
-    },
-    {
-      "source": "/",
-      "destination": "/src/api/main.py"
+      "src": "/(.*)",
+      "dest": "vercel_app.py"
     }
   ]
 }

@@ -1,0 +1,39 @@
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+tests/
+.pytest_cache/
+
+# Development
+.env.local
+*.log
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Frontend (deployed separately if needed)
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# Git
+.git/
+.gitignore
