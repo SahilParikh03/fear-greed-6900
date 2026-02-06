@@ -1,16 +1,30 @@
 {
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
+  "version": 2,
   "crons": [
     {
       "path": "/api/v1/internal/cron-refresh",
       "schedule": "*/5 * * * *"
     }
   ],
-  "rewrites": [
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "builds": [
     {
-      "source": "/api/:path*",
-      "destination": "/api"
+      "src": "vercel_app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "vercel_app.py"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }

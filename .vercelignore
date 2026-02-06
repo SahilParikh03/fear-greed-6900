@@ -31,7 +31,6 @@ docs/
 
 # Frontend
 frontend/node_modules/
-frontend/src/
 frontend/.vite/
 
 # Git
