@@ -1,0 +1,133 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║           FEAR & GREED INDEX 6900 - QUICK START              ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+┌───────────────────────────────────────────────────────────────┐
+│  STEP 1: START BACKEND (Terminal 1)                          │
+└───────────────────────────────────────────────────────────────┘
+
+Windows:
+  > start-backend.bat
+
+Manual:
+  > uv run uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+
+Expected Output:
+  ✅ Starting Fear & Greed Index 6900...
+  ✅ Connected to Binance WebSocket
+  ✅ Binance WebSocket service started
+  ✅ Application startup complete.
+
+Backend URL: http://localhost:8000
+API Docs:    http://localhost:8000/docs
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  STEP 2: START FRONTEND (Terminal 2)                         │
+└───────────────────────────────────────────────────────────────┘
+
+Windows:
+  > start-frontend.bat
+
+Manual:
+  > cd frontend
+  > npm run dev
+
+Expected Output:
+  VITE v7.2.4  ready in 250 ms
+  ➜  Local:   http://localhost:5173/
+
+Frontend URL: http://localhost:5173
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  STEP 3: OPEN BROWSER                                        │
+└───────────────────────────────────────────────────────────────┘
+
+Navigate to: http://localhost:5173
+
+You should see:
+  ✅ Liquid Glass dashboard
+  ✅ Animated gauge with live score
+  ✅ Live BTC price in header
+  ✅ Real-time price updates
+  🚨 Volatility alerts (when BTC moves ±$500)
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  WHAT'S RUNNING                                               │
+└───────────────────────────────────────────────────────────────┘
+
+Backend (Port 8000):
+  • FastAPI REST API
+  • Binance WebSocket (live BTC prices)
+  • Volatility detector (±$500 / 10min)
+  • Server-Sent Events (SSE)
+  • CoinMarketCap integration
+
+Frontend (Port 5173):
+  • Vite + React + TypeScript
+  • Liquid Glass UI (Tailwind)
+  • Framer Motion animations
+  • Real-time SSE connection
+  • Dynamic Island notifications
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  FEATURES TO TEST                                             │
+└───────────────────────────────────────────────────────────────┘
+
+1. Watch BTC price update in real-time (header)
+2. See odometer numbers roll smoothly
+3. Observe animated gauge needle with spring physics
+4. Wait for volatility alert (Dynamic Island appears)
+5. Click Dynamic Island to expand/collapse
+6. Hover over cards to see glass effects
+7. Watch component animations on page load
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  TROUBLESHOOTING                                              │
+└───────────────────────────────────────────────────────────────┘
+
+Backend won't start:
+  • Check: uv sync
+  • Verify: .env file with CMC_API_KEY
+  • Check: Port 8000 available
+
+Frontend won't start:
+  • Run: cd frontend && npm install
+  • Check: Port 5173 available
+  • Verify: Node.js 18+
+
+No real-time updates:
+  • Check backend is running
+  • Open DevTools > Network > EventStream
+  • Verify SSE connection to /api/v1/stream
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  KEYBOARD SHORTCUTS                                           │
+└───────────────────────────────────────────────────────────────┘
+
+Backend:
+  Ctrl+C - Stop server
+
+Frontend:
+  Ctrl+C - Stop dev server
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  DOCUMENTATION                                                │
+└───────────────────────────────────────────────────────────────┘
+
+Full Details:       TRANSFORMATION_COMPLETE.md
+Startup Guide:      STARTUP.md
+Project Structure:  CLAUDE.md
+
+
+╔═══════════════════════════════════════════════════════════════╗
+║  Ready to experience flagship-level crypto analytics! 🚀     ║
+╚═══════════════════════════════════════════════════════════════╝
