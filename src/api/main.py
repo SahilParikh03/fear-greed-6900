@@ -487,7 +487,7 @@ async def get_all_prices():
     }
 
 
-@app.get("/api/v1/agent/signal", response_model=AgentSignalResponse)
+@app.post("/api/v1/agent/signal", response_model=AgentSignalResponse)
 async def get_agent_signal():
     """
     Get simplified agent decision signal.

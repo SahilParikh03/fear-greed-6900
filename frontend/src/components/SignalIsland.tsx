@@ -57,7 +57,6 @@ export function SignalIsland({ event, onDismiss }: SignalIslandProps) {
 
   // Determine event type
   const isCrashEvent = event.type === "VOLATILITY_CRASH";
-  const isVolatilityEvent = event.type === "volatility_spike";
 
   // For crash events, always negative (price drop)
   // For volatility events, check price_change direction
