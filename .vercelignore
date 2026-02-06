@@ -29,10 +29,10 @@ docs/
 *.md
 !README.md
 
-# Frontend (deployed separately if needed)
+# Frontend
 frontend/node_modules/
-frontend/dist/
-frontend/build/
+frontend/src/
+frontend/.vite/
 
 # Git
 .git/
