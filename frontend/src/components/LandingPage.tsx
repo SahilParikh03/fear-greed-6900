@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { Activity, TrendingUp, Shield, Terminal, Zap, Twitter } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { API_ENDPOINTS } from "../utils/api";
 
 interface LivePrices {
   btc: number | null;
@@ -24,7 +25,7 @@ const tabContentVariants = {
     x: 0,
     transition: {
       duration: 0.25,
-      ease: "easeOut",
+      ease: "easeOut" as any,
     },
   },
   center: {
@@ -32,7 +33,7 @@ const tabContentVariants = {
     x: 0,
     transition: {
       duration: 0.25,
-      ease: "easeOut",
+      ease: "easeOut" as any,
     },
   },
   exit: {
@@ -40,7 +41,7 @@ const tabContentVariants = {
     x: 0,
     transition: {
       duration: 0.2,
-      ease: "easeIn",
+      ease: "easeIn" as any,
     },
   },
 };
@@ -76,7 +77,7 @@ export function LandingPage() {
 
   // Connect to real-time price updates
   useEffect(() => {
-    const eventSource = new EventSource("http://localhost:8000/api/v1/stream");
+    const eventSource = new EventSource(API_ENDPOINTS.stream);
 
     eventSource.addEventListener("price", (event) => {
       try {
@@ -110,7 +111,7 @@ export function LandingPage() {
   useEffect(() => {
     const fetchAgentSignal = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/v1/agent/signal", {
+        const response = await fetch(API_ENDPOINTS.agentSignal, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

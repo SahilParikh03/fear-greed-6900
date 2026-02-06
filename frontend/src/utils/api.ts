@@ -1,12 +1,21 @@
 import axios from "axios";
 import type { IndexData, HistoryData } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+// Use environment variable or detect based on dev mode
+const isDevelopment = import.meta.env.DEV;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ||
+  (isDevelopment ? "http://localhost:8000" : "");
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
 });
+
+// Export for use in components
+export const API_ENDPOINTS = {
+  stream: `${API_BASE_URL}/api/v1/stream`,
+  agentSignal: `${API_BASE_URL}/api/v1/agent/signal`,
+};
 
 export const apiClient = {
   getIndex: async (): Promise<IndexData> => {

@@ -5,7 +5,7 @@ import { HistoryChart } from "./HistoryChart";
 import { ScoreCard } from "./ScoreCard";
 import { SignalIsland } from "./SignalIsland";
 import { OdometerNumber } from "./OdometerNumber";
-import { apiClient } from "../utils/api";
+import { apiClient, API_ENDPOINTS } from "../utils/api";
 import type { IndexData, HistoryData } from "../types";
 import { cn } from "../utils/cn";
 import { motion } from "framer-motion";
@@ -90,7 +90,7 @@ export function Dashboard() {
       setError(
         err.response?.data?.detail ||
           err.message ||
-          "Failed to fetch data. Make sure the backend is running on http://localhost:8000"
+          "Failed to fetch data. Make sure the backend is running."
       );
     } finally {
       setLoading(false);
@@ -119,7 +119,7 @@ export function Dashboard() {
   // Connect to SSE for real-time updates
   useEffect(() => {
     const connectSSE = () => {
-      const eventSource = new EventSource("http://localhost:8000/api/v1/stream");
+      const eventSource = new EventSource(API_ENDPOINTS.stream);
 
       eventSource.onopen = () => {
         console.log("Connected to Apple-Sleek Stream");
