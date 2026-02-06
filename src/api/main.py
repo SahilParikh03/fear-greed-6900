@@ -8,12 +8,13 @@ historical data, and triggering data refresh operations.
 import asyncio
 import json
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 from collections import deque
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -113,6 +114,41 @@ class BTCPriceResponse(BaseModel):
     price: Optional[float]
     timestamp: str
     source: str
+
+
+class AgentSignalResponse(BaseModel):
+    """Response model for agent decision signal."""
+    index_score: float
+    sentiment: str
+    recommendation: str
+    is_volatile: bool
+    timestamp: str
+
+
+def get_recommendation(score: float) -> str:
+    """
+    Determine trading recommendation based on Fear & Greed score.
+
+    Args:
+        score: The Fear & Greed Index score (0-100)
+
+    Returns:
+        Recommendation string for agent decision-making
+    """
+    if score < 20:
+        return "STRONG_BUY"
+    elif score < 35:
+        return "ACCUMULATE_BTC"
+    elif score < 45:
+        return "BUY_DIP"
+    elif score < 55:
+        return "HOLD"
+    elif score < 70:
+        return "TAKE_SOME_PROFIT"
+    elif score < 80:
+        return "REDUCE_POSITION"
+    else:
+        return "TAKE_PROFIT"
 
 
 async def calculate_current_index() -> Dict:
@@ -281,11 +317,16 @@ async def root():
         "version": "1.0.0",
         "endpoints": {
             "index": "/api/v1/index",
+            "agent_signal": "/api/v1/agent/signal",
             "history": "/api/v1/history",
             "refresh": "/api/v1/refresh",
             "btc_price": "/api/v1/btc-price",
+            "prices": "/api/v1/prices",
             "stream": "/api/v1/stream",
             "health": "/api/v1/health"
+        },
+        "internal": {
+            "cron_refresh": "/api/v1/internal/cron-refresh (protected)"
         }
     }
 
@@ -351,6 +392,68 @@ async def refresh_data(background_tasks: BackgroundTasks):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/v1/internal/cron-refresh", response_model=RefreshResponse)
+async def cron_refresh_data(
+    background_tasks: BackgroundTasks,
+    request: Request,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Internal endpoint for Vercel Cron to refresh market data.
+
+    This endpoint is protected by a CRON_SECRET header and should only
+    be called by Vercel's cron service.
+
+    Security:
+        - Requires Authorization header matching CRON_SECRET env var
+        - Vercel cron automatically adds this header
+    """
+    try:
+        # Get the expected cron secret from environment
+        expected_secret = os.getenv("CRON_SECRET")
+
+        if not expected_secret:
+            logger.error("CRON_SECRET not configured in environment")
+            raise HTTPException(
+                status_code=500,
+                detail="Server configuration error: CRON_SECRET not set"
+            )
+
+        # Verify the authorization header
+        if not authorization:
+            logger.warning("Cron endpoint accessed without Authorization header")
+            raise HTTPException(
+                status_code=401,
+                detail="Unauthorized: Missing Authorization header"
+            )
+
+        # Compare secrets (use constant-time comparison to prevent timing attacks)
+        import secrets
+        if not secrets.compare_digest(authorization, expected_secret):
+            logger.warning(f"Cron endpoint accessed with invalid secret from {request.client.host if request.client else 'unknown'}")
+            raise HTTPException(
+                status_code=403,
+                detail="Forbidden: Invalid credentials"
+            )
+
+        logger.info("Cron job triggered: refreshing market data")
+
+        # Run refresh in background
+        background_tasks.add_task(refresh_data_task)
+
+        return {
+            "status": "accepted",
+            "message": "Cron-triggered data refresh initiated in background",
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in /api/v1/internal/cron-refresh: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/v1/btc-price", response_model=BTCPriceResponse)
 async def get_btc_price():
     """
@@ -382,6 +485,74 @@ async def get_all_prices():
         "source": "Binance WebSocket",
         "assets": list(prices.keys())
     }
+
+
+@app.get("/api/v1/agent/signal", response_model=AgentSignalResponse)
+async def get_agent_signal():
+    """
+    Get simplified agent decision signal.
+
+    This endpoint provides a streamlined response optimized for AI agents
+    and automated trading systems. Returns the current Fear & Greed score,
+    sentiment, actionable recommendation, and volatility status.
+
+    Recommendation logic:
+    - Score < 20: STRONG_BUY (extreme fear - best buying opportunity)
+    - Score 20-35: ACCUMULATE_BTC (fear - good accumulation zone)
+    - Score 35-45: BUY_DIP (slight fear - wait for dips)
+    - Score 45-55: HOLD (neutral - maintain positions)
+    - Score 55-70: TAKE_SOME_PROFIT (greed - consider taking profits)
+    - Score 70-80: REDUCE_POSITION (strong greed - reduce exposure)
+    - Score > 80: TAKE_PROFIT (extreme greed - sell into strength)
+
+    Volatility detection:
+    - Checks if volatility score > 60 (high volatility)
+    - Checks if market cap changed > 5% in 24h (significant move)
+    - Checks for recent crash events in the queue
+    """
+    try:
+        # Calculate current index
+        index_data = await calculate_current_index()
+
+        # Extract core metrics
+        score = index_data["master_score"]
+        sentiment = index_data["sentiment"]
+
+        # Determine recommendation based on score
+        recommendation = get_recommendation(score)
+
+        # Determine volatility status
+        # Check multiple signals: volatility score, market cap change, recent crashes
+        volatility_score = index_data["component_details"]["volatility"]["score"]
+        is_volatile = volatility_score > 60  # High volatility threshold
+
+        # Also check if there have been recent crash events
+        if len(crash_event_queue) > 0:
+            is_volatile = True
+
+        # Check market cap change from latest data
+        latest = history_manager.get_latest()
+        if latest and latest.get("market_cap_change_24h"):
+            market_cap_change = abs(latest["market_cap_change_24h"])
+            if market_cap_change > 5.0:  # More than 5% change
+                is_volatile = True
+
+        logger.info(
+            f"Agent signal: score={score:.2f}, sentiment={sentiment}, "
+            f"recommendation={recommendation}, volatile={is_volatile}"
+        )
+
+        return {
+            "index_score": round(score, 2),
+            "sentiment": sentiment,
+            "recommendation": recommendation,
+            "is_volatile": is_volatile,
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Error in /api/v1/agent/signal: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/v1/stream")
