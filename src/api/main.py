@@ -310,6 +310,12 @@ async def startup_event():
     else:
         logger.info("✅ Environment variables configured correctly")
 
+    # Check if running on Vercel (serverless)
+    if os.getenv("VERCEL") == "1":
+        logger.warning("⚠️  Running on Vercel with ephemeral storage (/tmp)")
+        logger.warning("Historical data will not persist between function invocations.")
+        logger.warning("Consider using a database for production deployments.")
+
     # Subscribe to Binance events
     binance_service.subscribe_price(on_price_update)
     binance_service.subscribe_volatility(on_volatility_spike)
@@ -649,9 +655,17 @@ async def health_check():
         all_prices = binance_service.get_all_prices()
         binance_status = "connected" if any(all_prices.values()) else "disconnected"
 
+        # Detect storage mode
+        is_serverless = os.getenv("VERCEL") == "1"
+        storage_mode = "ephemeral (/tmp)" if is_serverless else "persistent (local)"
+
         return {
             "status": "healthy",
             "timestamp": datetime.now().isoformat(),
+            "environment": {
+                "platform": "vercel" if is_serverless else "local",
+                "storage_mode": storage_mode
+            },
             "components": {
                 "api": "operational",
                 "history_manager": "operational" if has_data else "no_data",

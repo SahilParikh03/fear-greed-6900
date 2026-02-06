@@ -7,6 +7,7 @@ for trend analysis and historical scoring.
 
 import csv
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -28,31 +29,65 @@ class HistoryManager:
         Args:
             history_file: Path to CSV file (defaults to data/processed/market_history.csv)
         """
-        self.history_file = history_file or Path("data/processed/market_history.csv")
-        self.history_file.parent.mkdir(parents=True, exist_ok=True)
+        if history_file:
+            self.history_file = history_file
+        else:
+            # Detect if running in serverless environment (Vercel, AWS Lambda, etc.)
+            is_serverless = (
+                os.getenv("VERCEL") == "1" or
+                os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None or
+                os.getenv("FUNCTION_NAME") is not None  # Google Cloud Functions
+            )
+
+            if is_serverless:
+                # Use /tmp directory on serverless platforms
+                self.history_file = Path("/tmp/data/processed/market_history.csv")
+                logger.info("Running in serverless environment, using /tmp for storage")
+            else:
+                # Use local data directory for development
+                self.history_file = Path("data/processed/market_history.csv")
+                logger.info("Running in local environment, using data/ for storage")
+
+        # Create directory if it doesn't exist (will work in /tmp on serverless)
+        try:
+            self.history_file.parent.mkdir(parents=True, exist_ok=True)
+            logger.debug(f"Created directory: {self.history_file.parent}")
+        except OSError as e:
+            logger.error(f"Failed to create directory {self.history_file.parent}: {e}")
+            logger.warning("History persistence may not work. App will run with limited functionality.")
+            # If we can't create the directory, we'll fail gracefully later
+            pass
 
         # Initialize CSV with headers if it doesn't exist
-        if not self.history_file.exists():
-            self._initialize_csv()
-            logger.info(f"Created new history file: {self.history_file}")
-        else:
-            logger.info(f"Using existing history file: {self.history_file}")
+        try:
+            if not self.history_file.exists():
+                self._initialize_csv()
+                logger.info(f"Created new history file: {self.history_file}")
+            else:
+                logger.info(f"Using existing history file: {self.history_file}")
+        except Exception as e:
+            logger.warning(f"Could not check/initialize history file: {e}")
+            logger.warning("App will run without historical data persistence.")
 
     def _initialize_csv(self) -> None:
         """Create CSV file with headers."""
-        headers = [
-            "timestamp",
-            "total_market_cap",
-            "btc_dominance",
-            "total_volume_24h",
-            "market_cap_change_24h"
-        ]
+        try:
+            headers = [
+                "timestamp",
+                "total_market_cap",
+                "btc_dominance",
+                "total_volume_24h",
+                "market_cap_change_24h"
+            ]
 
-        with open(self.history_file, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(headers)
+            with open(self.history_file, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(headers)
 
-        logger.debug("Initialized CSV file with headers")
+            logger.debug("Initialized CSV file with headers")
+        except Exception as e:
+            logger.error(f"Failed to initialize CSV file: {e}")
+            # Don't raise - let the app continue without persistence
 
     def save_snapshot(
         self,
